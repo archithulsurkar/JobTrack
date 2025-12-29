@@ -31,8 +31,6 @@ export class JobService {
   readonly jobs = signal<Job[]>([]);
   readonly stages = signal<string[]>([]);
   
-  // Note: isLoading removed as LocalStorage is synchronous
-
   readonly stats = computed(() => {
     const all = this.jobs();
     const stageCounts: Record<string, number> = {};

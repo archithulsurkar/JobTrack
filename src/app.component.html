@@ -1,0 +1,126 @@
+
+@if (!authService.isLoggedIn()) {
+  <app-auth></app-auth>
+} @else {
+  <div class="flex h-screen bg-slate-50 text-slate-900 font-sans">
+    
+    <!-- Sidebar -->
+    <aside class="w-64 bg-white border-r border-slate-200 flex-shrink-0 flex flex-col shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-10">
+      <div class="p-6 border-b border-slate-100">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-indigo-400 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-indigo-200">
+            J
+          </div>
+          <h1 class="font-bold text-xl tracking-tight text-slate-800">JobTrack</h1>
+        </div>
+      </div>
+
+      <div class="p-6 flex-1 overflow-y-auto">
+        <div class="mb-4">
+          <button (click)="openAddJobModal()" class="w-full py-3 px-4 bg-primary hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200 transition-all transform active:scale-95 flex items-center justify-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            New Application
+          </button>
+        </div>
+
+        <div class="mb-8">
+          <button (click)="openStageManager()" class="w-full py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-medium rounded-lg transition-colors flex items-center justify-center gap-2 text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            Manage Stages
+          </button>
+        </div>
+
+        <div class="space-y-6">
+           <app-stats-chart></app-stats-chart>
+        </div>
+      </div>
+
+      <!-- User Profile & Logout -->
+      <div class="p-4 border-t border-slate-100 bg-slate-50">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-bold">
+            {{ authService.currentUser()?.name?.charAt(0) }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-slate-900 truncate">
+              {{ authService.currentUser()?.name }}
+            </p>
+            <p class="text-xs text-slate-500 truncate">
+              {{ authService.currentUser()?.email }}
+            </p>
+          </div>
+          <button (click)="logout()" class="p-2 text-slate-400 hover:text-red-500 transition-colors" title="Logout">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      
+    </aside>
+
+    <!-- Main Content (Kanban) -->
+    <main class="flex-1 overflow-x-auto overflow-y-hidden bg-slate-50/50 p-6">
+      <div class="h-full flex gap-6" [style.min-width.px]="jobService.stages().length * 300">
+        
+        @for (stage of jobService.stages(); track stage; let i = $index) {
+          <div class="flex-1 min-w-[280px] max-w-sm flex flex-col h-full rounded-xl transition-all duration-200"
+               [class.drag-over-active]="dragOverStage() === stage"
+               (dragover)="onDragOver($event, stage)"
+               (drop)="onDrop($event, stage)">
+            
+            <div class="flex items-center justify-between mb-4 px-1">
+              <h2 class="font-bold text-slate-700 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full" [class]="getStageColor(i)"></span>
+                {{ stage }}
+              </h2>
+              <span class="bg-white px-2 py-0.5 rounded-full text-xs font-bold text-slate-500 shadow-sm border border-slate-100">
+                {{ getJobsByStatus(stage).length }}
+              </span>
+            </div>
+            
+            <div class="flex-1 bg-slate-100/50 rounded-xl p-3 border border-slate-200/60 overflow-y-auto custom-scrollbar"
+                 [class.border-indigo-300]="dragOverStage() === stage"
+                 [class.bg-indigo-50]="dragOverStage() === stage">
+               <div class="space-y-3">
+                 @for (job of getJobsByStatus(stage); track job.id) {
+                   <app-job-card 
+                      [job]="job" 
+                      draggable="true" 
+                      (dragstart)="onDragStart($event, job)" 
+                      (dragend)="onDragEnd($event)"
+                      (edit)="openEditJobModal($event)" 
+                      (delete)="deleteJob($event)"
+                      class="block cursor-grab active:cursor-grabbing">
+                   </app-job-card>
+                 }
+                 
+                 @if (getJobsByStatus(stage).length === 0) {
+                   <div class="h-full w-full flex items-center justify-center text-slate-300 text-sm italic border-2 border-dashed border-slate-200 rounded-lg min-h-[100px]">
+                      Drop here
+                   </div>
+                 }
+               </div>
+            </div>
+          </div>
+        }
+
+      </div>
+    </main>
+
+    <!-- Modals -->
+    @if (showModal()) {
+      <app-job-form [jobData]="editingJob" (close)="closeModal()" (save)="handleSave($event)"></app-job-form>
+    }
+
+    @if (showStageManager()) {
+      <app-stage-manager (close)="closeStageManager()"></app-stage-manager>
+    }
+
+  </div>
+}

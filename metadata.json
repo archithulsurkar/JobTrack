@@ -1,0 +1,5 @@
+{
+  "name": "JobTrack",
+  "description": "A smart job application tracker with Kanban board and analytics.",
+  "requestFramePermissions": []
+}
